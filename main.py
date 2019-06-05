@@ -70,7 +70,7 @@ if __name__ == '__main__':
     batch = buffer.sample(BATCH_SIZE)
     print("Buffer populated!")
 
-    print("Start training:")
+    print("Start training: ")
 
     # ______________________________TRAINING__________________________________________________
 
