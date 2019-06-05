@@ -27,8 +27,8 @@ SYNC_TARGET_FRAMES = 10000
 REPLAY_START_SIZE = 10000
 
 
-NUMBER_FRAMES = 1000000
-EPSILON_DECAY_LAST_FRAME = 400000
+NUMBER_FRAMES = 400000
+EPSILON_DECAY_LAST_FRAME = 200000
 if LOAD_PREVIOUS:
     EPSILON_START = 0.02
 else:
@@ -87,7 +87,7 @@ if __name__ == '__main__':
             writer.add_scalar("episode_reward", ep_reward, i)
             if ep_reward > best_reward:
                 best_reward = ep_reward
-                writer.add_scalar("best reward", best_reward)
+                writer.add_scalar("best reward", best_reward, i)
                 torch.save(net.state_dict(), DEFAULT_ENV_NAME + "-best.dat")
 
         if (i % SYNC_TARGET_FRAMES) == 0:
