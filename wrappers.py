@@ -29,6 +29,8 @@ class action_space_discretizer (gym.Wrapper):
         return self.env.reset()
 
 
+# Skips a number of frames and repeats the last action for them. speeds up training extremely without
+# sacrificing much accuracy
 class SkipEnv(gym.Wrapper):
     def __init__(self, env=None, skip=4):
         """Return only every `skip`-th frame"""

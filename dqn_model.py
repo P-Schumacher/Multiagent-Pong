@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 from mpl_toolkits import mplot3d
 
 '''
-This class defines a neural network model by inheritance from the torch.nn.Module class. The initialiser of the parent 
+This class defines a neural network model by inheritance from the torch.nn.Module class. The initializer of the parent 
 has to be called by super() to setup the class. Then we define our own network by nn.Sequential(). Lastly we have to 
 overwrite forward()
 The main body of the function is debugging
