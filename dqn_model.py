@@ -26,6 +26,8 @@ class DQN (nn.Module):
     def forward(self, x):
         return self.net(x)
 
+
+#  Main is just for debugging
 if __name__ == '__main__':
 
     neural_net = DQN(5, 1)

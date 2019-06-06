@@ -7,7 +7,6 @@ import gym
 import roboschool
 from tensorboardX import SummaryWriter
 import time
-from matplotlib import pyplot as plt
 
 
 '''
@@ -27,22 +26,25 @@ SYNC_TARGET_FRAMES = 10000
 REPLAY_START_SIZE = 10000
 
 
-NUMBER_FRAMES = 400000
-EPSILON_DECAY_LAST_FRAME = 200000
+NUMBER_FRAMES = 5000000
+EPSILON_DECAY_LAST_FRAME = 50000
 if LOAD_PREVIOUS:
     EPSILON_START = 0.02
 else:
     EPSILON_START = 1
 EPSILON_FINAL = 0.02
 
-device = "cpu"  # actually faster than cuda.... I blame the Geforce 850M
+device = "cpu"
+# cpu faster than cuda, network is so small that the time needed to load it into the gpu is larger than
+# the gained time of parallel computing
+
 
 if __name__ == '__main__':
 
     # ______________________________CREATE AND INITIALIZE OBJECTS_______________________________
     env = gym.make(DEFAULT_ENV_NAME)
     # Discretize the action space and give it n*n actions, works better in DQN than high dimensional action_spaces
-    env = wrappers.action_space_discretizer(env, n=3)
+    env = wrappers.action_space_discretizer(env, n=2)
     env = wrappers.SkipEnv(env, skip=4)
     buffer = project_classes.ExperienceBuffer(REPLAY_SIZE)
     agent = project_classes.Agent(env, buffer)
@@ -54,8 +56,7 @@ if __name__ == '__main__':
         net.load_state_dict(torch.load("RoboschoolPong-v1-best_var_batch.dat"))
         tgt_net.load_state_dict(torch.load("RoboschoolPong-v1-best_var_batch.dat"))
 
-
-    writer = SummaryWriter(comment="-" + DEFAULT_ENV_NAME)
+    writer = SummaryWriter(comment="-" + "batch" + str(BATCH_SIZE) + "_n" + str(env.action_space.n) + "_eps" + str(EPSILON_DECAY_LAST_FRAME) + "_skip" + str(4))
 
     optimizer = optim.Adam(net.parameters(), lr=LEARNING_RATE)
     total_reward = []
@@ -93,6 +94,7 @@ if __name__ == '__main__':
         if (i % SYNC_TARGET_FRAMES) == 0:
             tgt_net.load_state_dict(net.state_dict())
             print("We are at: %i / %i frames" % (i, NUMBER_FRAMES))
+            torch.save(net.state_dict(), DEFAULT_ENV_NAME + "-time_update.dat")
             print("At: %f s" % (time.time() - start_time))
         optimizer.zero_grad()
         batch = buffer.sample(BATCH_SIZE)
@@ -101,6 +103,7 @@ if __name__ == '__main__':
         writer.add_scalar("loss", loss_t, i)
         writer.add_scalar("epsilon", epsilon, i)
         optimizer.step()
+
 
     writer.close()
     print("End training!")

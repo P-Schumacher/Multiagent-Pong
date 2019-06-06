@@ -50,9 +50,10 @@ class SkipEnv(gym.Wrapper):
         return obs
 
 
+#  Main is just for debugging
 if __name__ == '__main__':
     env = gym.make("RoboschoolPong-v1")
-    n = 3
+    n = 2
     env = action_space_discretizer(env, n)
     for i in range(n*n):
         print(env.action_tuple[i])
