@@ -41,7 +41,7 @@ if __name__ == '__main__':
 
     # ______________________________CREATE AND INITIALIZE OBJECTS_______________________________
     env = gym.make(DEFAULT_ENV_NAME)
-    env = wrappers.action_space_discretizer(env, n=2)
+    env = wrappers.action_space_discretizer(env, n=10)
     env = wrappers.SkipEnv(env, skip=4)
     buffer = project_classes.ExperienceBuffer(REPLAY_SIZE)
     agent = project_classes.Agent(env, buffer)
