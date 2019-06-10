@@ -20,7 +20,6 @@ class action_space_discretizer (gym.Wrapper):
             for j in range(n):
                 self.action_tuple.append(np.array([x[i], x[j]]))
 
-
     def step(self, action):
         assert type(action) == int, "we discretized the actions! please give int"
         return self.env.step(self.action_tuple[int(action)])

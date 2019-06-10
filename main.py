@@ -1,5 +1,5 @@
-import helper_functions
-import project_classes
+import helpfunc
+import helpclass
 import torch
 from torch import optim
 import numpy as np
@@ -34,11 +34,11 @@ params = {"DEFAULT_ENV_NAME": "RoboschoolPong-v1",
 if __name__ == '__main__':
 
     # ______________________________PREPARE AGENT ENVIRONMENT, BUFFER, NETS _______________________________
-    buffer, agent, net, tgt_net = helper_functions.setup_all(params)
+    buffer, agent, net, tgt_net = helpfunc.setup_all(params)
 
-    helper_functions.load_buffer(agent, params["REPLAY_START_SIZE"], params["REPLAY_SIZE"])
+    helpfunc.load_buffer(agent, params["REPLAY_START_SIZE"], params["REPLAY_SIZE"])
 
-    helper_functions.load_previous_model(net, tgt_net, "RoboschoolPong-v1-best.dat", params["LOAD_PREVIOUS "])
+    helpfunc.load_previous_model(net, tgt_net, "RoboschoolPong-v1-best.dat", params["LOAD_PREVIOUS "])
 
     optimizer = optim.Adam(net.parameters(), lr=params["LEARNING_RATE"])
 
@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
         optimizer.zero_grad()
         batch = buffer.sample(params["BATCH_SIZE"])
-        loss_t = project_classes.calc_loss(batch, net, tgt_net, params["GAMMA"], params["device"])
+        loss_t = helpclass.calc_loss(batch, net, tgt_net, params["GAMMA"], params["device"])
         loss_t.backward()
         optimizer.step()
 

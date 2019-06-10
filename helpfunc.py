@@ -2,7 +2,7 @@
 # the main function more high-level
 # will become important when automating parameter search
 import wrappers
-import project_classes
+import helpclass
 import dqn_model
 import gym
 import roboschool
@@ -12,8 +12,8 @@ import torch
 def setup_all(params):
     env = gym.make(params["DEFAULT_ENV_NAME"])
     env = construct_env(env, params["ACTION_SIZE"], params["SKIP_NUMBER"])
-    buffer = project_classes.ExperienceBuffer(params["REPLAY_SIZE"])
-    agent = project_classes.Agent(env, buffer)
+    buffer = helpclass.ExperienceBuffer(params["REPLAY_SIZE"])
+    agent = helpclass.Agent(env, buffer)
     net = dqn_model.DQN(env.observation_space.shape[0], env.action_space.n).to(params["device"])
     tgt_net = dqn_model.DQN(env.observation_space.shape[0], env.action_space.n).to(params["device"])
     return buffer, agent, net, tgt_net
@@ -32,7 +32,7 @@ def load_buffer(agent, start_size, replay_size):
     for frames in range(start_size):
         action = agent.env.action_space.sample()
         new_state, reward, is_done, _ = agent.env.step(action)
-        exp = project_classes.Experience(state, action, reward, is_done, new_state)
+        exp = helpclass.Experience(state, action, reward, is_done, new_state)
         agent.exp_buffer.append(exp)
     print("Buffer populated!")
 
