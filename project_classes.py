@@ -5,7 +5,7 @@ import collections
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from main import Parameters
+from main import params
 import gym
 import roboschool
 
@@ -84,7 +84,7 @@ def calc_loss(batch, net, tgt_net, GAMMA, device="cpu"):
     next_state_values[done_mask] = 0.0
     next_state_values = next_state_values.detach()
 
-    expected_state_action_values = next_state_values * Parameters["GAMMA"] + rewards_v
+    expected_state_action_values = next_state_values * params["GAMMA"] + rewards_v
     return nn.MSELoss()(state_action_values, expected_state_action_values)
 
 if __name__ == '__main__':

@@ -22,7 +22,7 @@ recorder = gym.wrappers.monitoring.video_recorder.VideoRecorder(env, "./recordin
 if not MAKE_VIDEO:
     env.render()
 
-for i in range(2):
+for i in range(1):
     obs = env.reset()
     while True:
         recorder.capture_frame()
