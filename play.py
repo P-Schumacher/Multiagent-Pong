@@ -6,12 +6,11 @@ import time
 import gym.wrappers
 
 
-DEFAULT_ENV_NAME = "RoboschoolPong-v1"
-MAKE_VIDEO = False # Set true or false here to record video OR render, not both
+DEFAULT_ENV_NAME = "RoboschoolPong-v8"  # Use a longer version of Pong for demonstration (needs to be defined in source)
+MAKE_VIDEO = False  # Set true or false here to record video OR render, not both
 
 env = gym.make(DEFAULT_ENV_NAME)
 env = wrappers.action_space_discretizer(env, 10)
-#env = wrappers.SkipEnv(env, skip=4)
 net = DQN(env.observation_space.shape[0], env.action_space.n)
 # net.load_state_dict(torch.load("RoboschoolPong-v1-best_var_batch.dat"))
 # net.load_state_dict(torch.load("RoboschoolPong-v1-best_night_training.dat"))

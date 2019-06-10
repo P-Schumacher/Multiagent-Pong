@@ -2,11 +2,10 @@ import argparse
 import time
 import numpy as np
 import collections
-from main import GAMMA
 import torch
 import torch.nn as nn
 import torch.optim as optim
-
+from main import Parameters
 import gym
 import roboschool
 
@@ -71,7 +70,7 @@ class Agent:
         return done_reward
 
 
-def calc_loss(batch, net, tgt_net, device="cpu"):
+def calc_loss(batch, net, tgt_net, GAMMA, device="cpu"):
     states, actions, rewards, dones, next_states = batch
 
     states_v = torch.tensor(states, dtype=torch.float32).to(device)
@@ -85,12 +84,10 @@ def calc_loss(batch, net, tgt_net, device="cpu"):
     next_state_values[done_mask] = 0.0
     next_state_values = next_state_values.detach()
 
-    expected_state_action_values = next_state_values * GAMMA + rewards_v
+    expected_state_action_values = next_state_values * Parameters["GAMMA"] + rewards_v
     return nn.MSELoss()(state_action_values, expected_state_action_values)
 
-
-
-
-
+if __name__ == '__main__':
+    pass
 
 
