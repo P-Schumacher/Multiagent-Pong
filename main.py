@@ -5,10 +5,10 @@ from torch import optim
 import numpy as np
 from tensorboardX import SummaryWriter
 
+# TODO multiplayer training, automated hyperparameter search, double q learning, n step q learning
 
 '''
 Main function: Defines important constants, initializes all the important classes and does the training.
-Will be made prettier
 '''
 
 params = {"DEFAULT_ENV_NAME": "RoboschoolPong-v1",
@@ -43,7 +43,8 @@ if __name__ == '__main__':
     optimizer = optim.Adam(net.parameters(), lr=params["LEARNING_RATE"])
 
     writer = SummaryWriter(comment="-" + "batch" + str(params["BATCH_SIZE"]) + "_n" + str(agent.env.action_space.n) +
-                                   "_eps" + str(params["EPSILON_DECAY_LAST_FRAME"]) + "_skip" + str(4))
+            "_eps" + str(params["EPSILON_DECAY_LAST_FRAME"]) + "_skip" + str(4) + "learning_rate"
+                                   + str(params["LEARNING_RATE"]))
 
     if params["LOAD_PREVIOUS "]:
         params["EPSILON_START"] = params["EPSILON_FINAL"]
@@ -64,6 +65,7 @@ if __name__ == '__main__':
                 best_reward = ep_reward
                 writer.add_scalar("best reward", best_reward, frame)
                 torch.save(net.state_dict(), params["DEFAULT_ENV_NAME"] + "-best.dat")
+
         if (frame % params["SYNC_TARGET_FRAMES"]) == 0:
             tgt_net.load_state_dict(net.state_dict())  # Syncs target and Standard net
             print("We are at: %i / %i frames" % (frame, params["NUMBER_FRAMES"]))

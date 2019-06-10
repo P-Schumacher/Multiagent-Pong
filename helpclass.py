@@ -5,7 +5,6 @@ import collections
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from main import params
 import gym
 import roboschool
 
@@ -70,6 +69,7 @@ class Agent:
         return done_reward
 
 
+# TODO implement double q learning
 def calc_loss(batch, net, tgt_net, GAMMA, device="cpu"):
     states, actions, rewards, dones, next_states = batch
 
@@ -84,8 +84,33 @@ def calc_loss(batch, net, tgt_net, GAMMA, device="cpu"):
     next_state_values[done_mask] = 0.0
     next_state_values = next_state_values.detach()
 
-    expected_state_action_values = next_state_values * params["GAMMA"] + rewards_v
+    expected_state_action_values = next_state_values * GAMMA + rewards_v
     return nn.MSELoss()(state_action_values, expected_state_action_values)
+
+
+# Work in progress. Want to create a buffer which sees every n steps as 1 step and appropriately discounts the rewards
+# For off policy DQN, this speeds up training if n is kept small (<4)
+# For larger n, on policy corrections are needed
+class Nstep_ExperienceBuffer:
+    # TODO finish n step TD method by buffer
+    def __init__(self, n_steps):
+        self.counter = 0
+        self.buffer = 0
+        self.subbuffer = 0
+        pass
+
+    def __len__(self):
+        pass
+
+    def append(self):
+        counter += 1
+        subbuffer.append()
+        if counter == 4:
+            buffer.append()
+
+    def sample(self):
+        pass
+
 
 if __name__ == '__main__':
     pass

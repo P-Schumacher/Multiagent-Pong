@@ -5,6 +5,10 @@ import wrappers
 import time
 import gym.wrappers
 
+'''
+This function is for seeing models in action, it uses a slightly modified version of the environment which has longer 
+timeouts and longer episode lengths
+'''
 
 DEFAULT_ENV_NAME = "RoboschoolPong-v8"  # Use a longer version of Pong for demonstration (needs to be defined in source)
 MAKE_VIDEO = False  # Set true or false here to record video OR render, not both
