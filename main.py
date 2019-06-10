@@ -80,5 +80,4 @@ if __name__ == '__main__':
 
     writer.close()
     print("End training!")
-    print("Time was: %f" % (time.time() - start_time))
     torch.save(net.state_dict(), Parameters["DEFAULT_ENV_NAME"] + "end_of_training.dat")
