@@ -14,12 +14,9 @@ DEFAULT_ENV_NAME = "RoboschoolPong-v8"  # Use a longer version of Pong for demon
 MAKE_VIDEO = False  # Set true or false here to record video OR render, not both
 
 env = gym.make(DEFAULT_ENV_NAME)
-env = wrappers.action_space_discretizer(env, 10)
+env = wrappers.action_space_discretizer(env, 2)
 net = DQN(env.observation_space.shape[0], env.action_space.n)
-# net.load_state_dict(torch.load("RoboschoolPong-v1-best_var_batch.dat"))
-# net.load_state_dict(torch.load("RoboschoolPong-v1-best_night_training.dat"))
-# net.load_state_dict(torch.load("RoboschoolPong-v1-end_of_training.dat"))
-net.load_state_dict(torch.load("RoboschoolPong-v1-time_update.dat"))
+net.load_state_dict(torch.load("RoboschoolPong-v1-best_night_training.dat"))
 env.reset()
 recorder = gym.wrappers.monitoring.video_recorder.VideoRecorder(env, "./recording.mp4", enabled=MAKE_VIDEO)
 

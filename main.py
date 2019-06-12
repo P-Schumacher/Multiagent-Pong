@@ -5,7 +5,7 @@ from torch import optim
 import numpy as np
 from tensorboardX import SummaryWriter
 
-# TODO multiplayer training, automated hyperparameter search, double q learning, n step q learning
+# TODO multiplayer training (self play), automated hyperparameter search, double q learning, n step q learning
 
 '''
 Main function: Defines important constants, initializes all the important classes and does the training.

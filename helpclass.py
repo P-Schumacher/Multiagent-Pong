@@ -27,6 +27,8 @@ class ExperienceBuffer:
     # zip(exp, exp, exp) then rearranges the tuples such that new tuples are created
     # where the first elements of every exp tuple is in one tuple,
     # the second elements of every exp tuple are in one tuple etc
+
+    # TODO standardize variable type declarations
     def sample(self, batch_size):
         indices = np.random.choice(len(self.buffer), batch_size, replace=False)
         states, actions, rewards, dones, next_states = zip(*[self.buffer[idx] for idx in indices])
