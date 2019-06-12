@@ -10,7 +10,7 @@ This function is for seeing models in action, it uses a slightly modified versio
 timeouts and longer episode lengths
 '''
 
-DEFAULT_ENV_NAME = "RoboschoolPong-v8"  # Use a longer version of Pong for demonstration (needs to be defined in source)
+DEFAULT_ENV_NAME = "RoboschoolPong-v1"  # Use a longer version of Pong for demonstration (needs to be defined in source)
 MAKE_VIDEO = False  # Set true or false here to record video OR render, not both
 
 env = gym.make(DEFAULT_ENV_NAME)

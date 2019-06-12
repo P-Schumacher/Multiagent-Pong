@@ -13,6 +13,9 @@ Experience = collections.namedtuple("Experience", field_names=['state', 'action'
 
 
 class ExperienceBuffer:
+    """
+    Buffer of fixed capacity to handle previous experiences for bootstrap sampling.
+    """
     def __init__(self, capacity):
         self.buffer = collections.deque(maxlen=capacity)
 
@@ -28,6 +31,9 @@ class ExperienceBuffer:
     # where the first elements of every exp tuple is in one tuple,
     # the second elements of every exp tuple are in one tuple etc
     def sample(self, batch_size):
+        """
+        Sample random batch from past experiences.
+        """
         indices = np.random.choice(len(self.buffer), batch_size, replace=False)
         states, actions, rewards, dones, next_states = zip(*[self.buffer[idx] for idx in indices])
         return states, np.array(actions), np.array(rewards, dtype=np.float32), \
@@ -45,6 +51,10 @@ class Agent:
         self.total_reward = 0.0
 
     def play_step(self, net, epsilon=0.0, device="cpu"):
+        """
+        Epsilon greedy step. With probability epsilon, a random action is taken (exploration),
+        else the action ist chosen to maximize the q-value as approximated by net (exploitation).
+        """
         done_reward = None
 
         if np.random.random() < epsilon:
@@ -71,6 +81,9 @@ class Agent:
 
 # TODO implement double q learning
 def calc_loss(batch, net, tgt_net, GAMMA, device="cpu"):
+    """
+    Calculate mean squared error as loss function.
+    """
     states, actions, rewards, dones, next_states = batch
 
     states_v = torch.tensor(states, dtype=torch.float32).to(device)
@@ -81,8 +94,8 @@ def calc_loss(batch, net, tgt_net, GAMMA, device="cpu"):
 
     state_action_values = net(states_v).gather(1, actions_v.unsqueeze(-1)).squeeze(-1)
     next_state_values = tgt_net(next_states_v).max(1)[0]
-    next_state_values[done_mask] = 0.0
-    next_state_values = next_state_values.detach()
+    next_state_values[done_mask] = 0.0 # final states have a future reward of 0
+    next_state_values = next_state_values.detach()  # detach it from the current graph
 
     expected_state_action_values = next_state_values * GAMMA + rewards_v
     return nn.MSELoss()(state_action_values, expected_state_action_values)
@@ -114,5 +127,4 @@ class Nstep_ExperienceBuffer:
 
 if __name__ == '__main__':
     pass
-
 
