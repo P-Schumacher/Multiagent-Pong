@@ -11,7 +11,7 @@ Main function: Defines important constants, initializes all the important classe
 '''
 
 params = {"DEFAULT_ENV_NAME": "RoboschoolPong-v1",
-              "GAMMA": 0.99,  # discoutn factor in Bellman update
+              "GAMMA": 0.99,  # discount factor in Bellman update
               "BATCH_SIZE": 256,  # how many samples at the same time (has to be big for convergence of TD 1 step)
               "LOAD_PREVIOUS ": False,  # Set to true if we want to further train a previous model
               "REPLAY_SIZE": 10000,  # size of replay buffer
