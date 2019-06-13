@@ -14,7 +14,7 @@ Main function: Defines important constants, initializes all the important classe
 params = {"DEFAULT_ENV_NAME": "RoboschoolPong-v1",
               "GAMMA": 0.99,  # discoutn factor in Bellman update
               "BATCH_SIZE": 256,  # how many samples at the same time (has to be big for convergence of TD 1 step)
-              "LOAD_PREVIOUS ": False,  # Set to true if we want to further train a previous model
+              "LOAD_PREVIOUS ": True,  # Set to true if we want to further train a previous model
               "REPLAY_SIZE": 10000,  # size of replay buffer
               "LEARNING_RATE": 1e-4,  # learning rate of neural network update
               "SYNC_TARGET_FRAMES": 10000,  # when to sync neural net and target network (low values destroy loss func)
@@ -43,11 +43,11 @@ if __name__ == '__main__':
     optimizer = optim.Adam(net.parameters(), lr=params["LEARNING_RATE"])
 
     writer = SummaryWriter(comment="-" + "batch" + str(params["BATCH_SIZE"]) + "_n" + str(agent.env.action_space.n) +
-            "_eps" + str(params["EPSILON_DECAY_LAST_FRAME"]) + "_skip" + str(4) + "learning_rate"
-                                   + str(params["LEARNING_RATE"]))
+                           "_eps" + str(params["EPSILON_DECAY_LAST_FRAME"]) + "_skip" + str(4) + "learning_rate"
+                           + str(params["LEARNING_RATE"]))
 
     if params["LOAD_PREVIOUS "]:
-        params["EPSILON_START"] = params["EPSILON_FINAL"]
+        params["EPSILON_START"] = params["EPSILON_FINAL"] # for a pretrained net, skip epsilon decay
 
     # ______________________________TRAINING__________________________________________________
     print("Start training: ")
@@ -61,7 +61,7 @@ if __name__ == '__main__':
             writer.add_scalar("episode_reward", ep_reward, frame)
             writer.add_scalar("mean100_reward", np.mean(reward[-100:]), frame)
 
-            if ep_reward > best_reward:
+            if ep_reward > best_reward: # network that gives best reward is stored (TODO mean reward instead?)
                 best_reward = ep_reward
                 writer.add_scalar("best reward", best_reward, frame)
                 torch.save(net.state_dict(), params["DEFAULT_ENV_NAME"] + "-best.dat")
@@ -74,7 +74,7 @@ if __name__ == '__main__':
         optimizer.zero_grad()
         batch = buffer.sample(params["BATCH_SIZE"])
         loss_t = helpclass.calc_loss(batch, net, tgt_net, params["GAMMA"], params["device"])
-        loss_t.backward()
+        loss_t.backward() # backpropagate loss gradient through all parameters that require gradient
         optimizer.step()
 
         writer.add_scalar("loss", loss_t, frame)
