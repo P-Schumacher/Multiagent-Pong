@@ -8,6 +8,7 @@ import time
 
 RECORD = False  # do you want to record?
 
+
 def play(env, net, recorder, video):
     episode_n = 0
     while 1:
