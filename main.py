@@ -19,8 +19,8 @@ params = {"DEFAULT_ENV_NAME": "RoboschoolPong-v1",
               "SYNC_TARGET_FRAMES": 10000,  # when to sync neural net and target network (low values destroy loss func)
               "REPLAY_START_SIZE": 10000,  # how much do we fill the buffer before training
               "EPSILON_DECAY_LAST_FRAME": 10000,  # how fast does the epsilon exploration decay
-              "NUMBER_FRAMES": 300000,  # total number of training frames
-              "ACTION_SIZE": 10,  # network doesnt seem to care much about action_space discretization...
+              "NUMBER_FRAMES": 500000,  # total number of training frames
+              "ACTION_SIZE": 3,  # network doesnt seem to care much about action_space discretization...
               "SKIP_NUMBER": 4,  # how many frames are skipped with repeated actions != n step DQN
               "EPSILON_START": 1,
               "EPSILON_FINAL": 0.02,
