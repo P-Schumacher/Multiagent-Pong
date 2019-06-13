@@ -1,9 +1,8 @@
 import helpfunc
 import helpclass
 import torch
-from torch import optim
 import numpy as np
-from tensorboardX import SummaryWriter
+
 
 # TODO multiplayer training (self play), automated hyperparameter search, double q learning, n step q learning
 
@@ -34,20 +33,7 @@ params = {"DEFAULT_ENV_NAME": "RoboschoolPong-v1",
 if __name__ == '__main__':
 
     # ______________________________PREPARE AGENT ENVIRONMENT, BUFFER, NETS _______________________________
-    buffer, agent, net, tgt_net = helpfunc.setup_all(params)
-
-    helpfunc.load_buffer(agent, params["REPLAY_START_SIZE"], params["REPLAY_SIZE"])
-
-    helpfunc.load_previous_model(net, tgt_net, "RoboschoolPong-v1-best.dat", params["LOAD_PREVIOUS "])
-
-    optimizer = optim.Adam(net.parameters(), lr=params["LEARNING_RATE"])
-
-    writer = SummaryWriter(comment="-" + "batch" + str(params["BATCH_SIZE"]) + "_n" + str(agent.env.action_space.n) +
-            "_eps" + str(params["EPSILON_DECAY_LAST_FRAME"]) + "_skip" + str(4) + "learning_rate"
-                                   + str(params["LEARNING_RATE"]))
-
-    if params["LOAD_PREVIOUS "]:
-        params["EPSILON_START"] = params["EPSILON_FINAL"]
+    agent, buffer, optimizer, writer, net, tgt_net = helpfunc.start_env(params)
 
     # ______________________________TRAINING__________________________________________________
     print("Start training: ")

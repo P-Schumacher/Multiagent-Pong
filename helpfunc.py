@@ -7,6 +7,27 @@ import dqn_model
 import gym
 import roboschool
 import torch
+from tensorboardX import SummaryWriter
+from torch import optim
+
+
+def start_env(params):
+    agent, buffer, net, tgt_net = setup_all(params)
+
+    load_buffer(agent, params["REPLAY_START_SIZE"], params["REPLAY_SIZE"])
+
+    load_previous_model(net, tgt_net, "RoboschoolPong-v1-best.dat", params["LOAD_PREVIOUS "])
+
+    optimizer = optim.Adam(net.parameters(), lr=params["LEARNING_RATE"])
+
+    writer = SummaryWriter(comment="-" + "batch" + str(params["BATCH_SIZE"]) + "_n" + str(agent.env.action_space.n) +
+                                   "_eps" + str(params["EPSILON_DECAY_LAST_FRAME"]) + "_skip" + str(4) + "learning_rate"
+                                   + str(params["LEARNING_RATE"]))
+
+    if params["LOAD_PREVIOUS "]:
+        params["EPSILON_START"] = params["EPSILON_FINAL"]
+
+    return agent, buffer, optimizer, writer, net, tgt_net
 
 
 def setup_all(params):
@@ -16,7 +37,7 @@ def setup_all(params):
     agent = helpclass.Agent(env, buffer)
     net = dqn_model.DQN(env.observation_space.shape[0], env.action_space.n).to(params["device"])
     tgt_net = dqn_model.DQN(env.observation_space.shape[0], env.action_space.n).to(params["device"])
-    return buffer, agent, net, tgt_net
+    return agent, buffer, net, tgt_net
 
 
 def construct_env(env, n_actions, n_skip):
