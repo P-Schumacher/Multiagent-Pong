@@ -82,7 +82,7 @@ class Agent:
 
 
 # TODO implement double q learning
-def calc_loss(batch, net, tgt_net, GAMMA, device="cpu"):
+def calc_loss(batch, net, tgt_net, GAMMA, double=False, device="cpu"):
     """
     Calculate mean squared error as loss function.
     """
@@ -95,8 +95,12 @@ def calc_loss(batch, net, tgt_net, GAMMA, device="cpu"):
     done_mask = torch.ByteTensor(dones).to(device)
 
     state_action_values = net(states_v).gather(1, actions_v.unsqueeze(-1)).squeeze(-1)
-    next_state_values = tgt_net(next_states_v).max(1)[0]
-    next_state_values[done_mask] = 0.0 # final states have a future reward of 0
+    if double:
+        next_state_actions = net(next_states_v).max(1)[1]
+        next_state_values = tgt_net(next_states_v).gather(1, next_state_actions.unsqueeze(-1)).squeeze(-1)
+    else:
+        next_state_values = tgt_net(next_states_v).max(1)[0]
+    next_state_values[done_mask] = 0.0  # final states have a future reward of 0
     next_state_values = next_state_values.detach()  # detach it from the current graph
 
     expected_state_action_values = next_state_values * GAMMA + rewards_v

@@ -24,6 +24,7 @@ params = {"DEFAULT_ENV_NAME": "RoboschoolPong-v1",
               "SKIP_NUMBER": 4,  # how many frames are skipped with repeated actions != n step DQN
               "EPSILON_START": 1,
               "EPSILON_FINAL": 0.02,
+              "double": True,
               "device": "cpu"}
 
 # cpu faster than cuda, network is so small that the time needed to load it into the gpu is larger than
@@ -59,7 +60,7 @@ if __name__ == '__main__':
 
         optimizer.zero_grad()
         batch = buffer.sample(params["BATCH_SIZE"])
-        loss_t = helpclass.calc_loss(batch, net, tgt_net, params["GAMMA"], params["device"])
+        loss_t = helpclass.calc_loss(batch, net, tgt_net, params["GAMMA"], params["double"], params["device"])
         loss_t.backward()
         optimizer.step()
 
