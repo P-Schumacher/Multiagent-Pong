@@ -81,7 +81,6 @@ class Agent:
         return done_reward
 
 
-# TODO implement double q learning
 def calc_loss(batch, net, tgt_net, GAMMA, double=False, device="cpu"):
     """
     Calculate mean squared error as loss function.
@@ -104,7 +103,7 @@ def calc_loss(batch, net, tgt_net, GAMMA, double=False, device="cpu"):
     next_state_values = next_state_values.detach()  # detach it from the current graph
 
     expected_state_action_values = next_state_values * GAMMA + rewards_v
-    return nn.MSELoss()(state_action_values, expected_state_action_values)
+    return nn.SmoothL1Loss()(state_action_values, expected_state_action_values)
 
 
 # Work in progress. Want to create a buffer which sees every n steps as 1 step and appropriately discounts the rewards
