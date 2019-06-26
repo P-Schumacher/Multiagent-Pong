@@ -10,13 +10,9 @@ _setup_all(params)
 _construct_env(env, n_actions, n_skip)
 
 '''
-import helpfunc
-import helpclass
 from buffers import ExperienceBuffer, Experience
 import torch
-from torch import optim
 import numpy as np
-from tensorboardX import SummaryWriter
 
 class Pongagent:
     def __init__(self, env, exp_buffer:ExperienceBuffer):

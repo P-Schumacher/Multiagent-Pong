@@ -15,7 +15,7 @@ params = {"env_name": "RoboschoolPong-v1",
             "learning_rate": 1e-4,  # learning rate of neural network update
             "sync": 10000,  # when to sync neural net and target network (low values destroy loss func)
             "eps_decay_rate": 10000,  # how fast does the epsilon exploration decay
-            "training_frames": 30000,  # total number of training frames
+            "training_frames": 300000,  # total number of training frames
             "nactions": 10,  # network doesnt seem to care much about action_space discretization...
             "skip_frames": 4,  # how many frames are skipped with repeated actions != n step DQN
             "eps_start": 1,

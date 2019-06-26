@@ -1,9 +1,6 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from matplotlib import pyplot as plt
-from mpl_toolkits import mplot3d
-
 '''
 This class defines a neural network model by inheritance from the torch.nn.Module class. The initializer of the parent
 has to be called by super() to setup the class. Then we define our own network by nn.Sequential(). Lastly we have to
@@ -25,6 +22,26 @@ class DQN (nn.Module):
 
     def forward(self, x):
         return self.net(x)
+
+def calc_loss(batch, net, tgt_net, GAMMA, device="cpu"):
+    """
+    Calculate mean squared error as loss function.
+    """
+    states, actions, rewards, dones, next_states = batch
+
+    states_v = torch.tensor(states, dtype=torch.float32).to(device)
+    next_states_v = torch.tensor(next_states, dtype=torch.float32).to(device)
+    actions_v = torch.tensor(actions).to(device)
+    rewards_v = torch.tensor(rewards).to(device)
+    done_mask = torch.ByteTensor(dones).to(device)
+
+    state_action_values = net(states_v).gather(1, actions_v.unsqueeze(-1)).squeeze(-1)
+    next_state_values = tgt_net(next_states_v).max(1)[0]
+    next_state_values[done_mask] = 0.0 # final states have a future reward of 0
+    next_state_values = next_state_values.detach()  # detach it from the current graph
+
+    expected_state_action_values = next_state_values * GAMMA + rewards_v
+    return nn.MSELoss()(state_action_values, expected_state_action_values)
 
 
 #  Main is just for debugging
