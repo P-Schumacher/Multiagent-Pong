@@ -11,7 +11,7 @@ import roboschool
 # returns a namedtuple with (state, action, reward...)
 Experience = collections.namedtuple("Experience", field_names=['state', 'action', 'reward', 'done', 'new_state'])
 
-# implemented in experiencebuffer.py
+# implemented in buffers.py
 class ExperienceBuffer:
     """
     Buffer of fixed capacity to handle previous experiences for bootstrap sampling.

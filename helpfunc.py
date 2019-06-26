@@ -8,7 +8,7 @@ import torch
 from tensorboardX import SummaryWriter
 from torch import optim
 
-
+# implemented in pongsimulation.py: create_simulation
 def start_env(params):
     agent, buffer, net, tgt_net = _setup_all(params)
 
@@ -27,7 +27,7 @@ def start_env(params):
 
     return agent, buffer, optimizer, writer, net, tgt_net
 
-
+# implemented in pongsimulation.py: create_environment, create_agent, create_model
 def _setup_all(params):
     env = gym.make(params["DEFAULT_ENV_NAME"])
     env = _construct_env(env, params["ACTION_SIZE"], params["SKIP_NUMBER"])
@@ -37,13 +37,13 @@ def _setup_all(params):
     tgt_net = dqn_model.DQN(env.observation_space.shape[0], env.action_space.n).to(params["device"])
     return agent, buffer, net, tgt_net
 
-
+# implemented in pongsimulation.py: create_environment
 def _construct_env(env, n_actions, n_skip):
     env = wrappers.action_space_discretizer(env, n=n_actions)
     env = wrappers.SkipEnv(env, skip=n_skip)
     return env
 
-# implemented in experiencebuffer.py
+# implemented in buffers.py
 def fill_buffer(agent, start_size, replay_size):
     assert start_size <= replay_size, "Start size of buffer is bigger than buffer size!"
     state = agent.env.reset()
@@ -55,7 +55,7 @@ def fill_buffer(agent, start_size, replay_size):
         agent.exp_buffer.append(exp)
     print("Buffer populated!")
 
-
+# implemented in pongsimulation.py
 def load_model(net, tgt_net, file_name=None, activator=False):
     if file_name is not None:
         assert type(file_name) == str, "Name of model to be loaded has to be a string!"

@@ -12,7 +12,7 @@ _construct_env(env, n_actions, n_skip)
 '''
 import helpfunc
 import helpclass
-from buffers import ExperienceBuffer
+from buffers import ExperienceBuffer, Experience
 import torch
 from torch import optim
 import numpy as np
@@ -22,7 +22,7 @@ class Pongagent:
     def __init__(self, env, exp_buffer:ExperienceBuffer):
         self.env = env
         self.exp_buffer = exp_buffer
-        self.exp_buffer.fill = lambda nsamples: self.exp_buffer.fill(self.env, nsamples)
+        #self.exp_buffer.fill = lambda: exp_buffer.fill(self.env)   # some sort of recursion?
         self._reset()
 
     def _reset(self):
@@ -57,5 +57,3 @@ class Pongagent:
             self._reset()
         return done_reward
 
-def train(params):
-    pass
