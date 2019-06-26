@@ -11,7 +11,7 @@ timeouts and longer episode lengths
 '''
 
 DEFAULT_ENV_NAME = "RoboschoolPong-v1"  # Use a longer version of Pong for demonstration (needs to be defined in source)
-MAKE_VIDEO = False  # Set true or false here to record video OR render, not both
+MAKE_VIDEO = True  # Set true or false here to record video OR render, not both
 
 env = gym.make(DEFAULT_ENV_NAME)
 env = wrappers.action_space_discretizer(env, 3)
@@ -19,9 +19,7 @@ net = DQN(env.observation_space.shape[0], env.action_space.n)
 net.load_state_dict(torch.load("ddqn.dat"))
 env.reset()
 recorder = gym.wrappers.monitoring.video_recorder.VideoRecorder(env, "./recording.mp4", enabled=MAKE_VIDEO)
-
-if not MAKE_VIDEO:
-    env.render()
+still_open = True
 
 for i in range(1):
     obs = env.reset()
@@ -30,6 +28,10 @@ for i in range(1):
         action = net(torch.tensor(obs, dtype=torch.float32)).max(0)[1]
         action = action.item()
         action = int(action)
+        if not MAKE_VIDEO:
+            still_open = env.render("rgb-array")
+        if not still_open:
+            break
         obs, reward, done, _ = env.step(action)
         if not MAKE_VIDEO:
             time.sleep(0.011)

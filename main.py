@@ -1,17 +1,18 @@
 import helpfunc
 import helpclass
 import torch
+from torch import optim
 import numpy as np
+from tensorboardX import SummaryWriter
 
-
-# TODO multiplayer training (self play), automated hyperparameter search, double q learning, n step q learning
+# TODO multiplayer training, automated hyperparameter search, double q learning, n step q learning
 
 '''
 Main function: Defines important constants, initializes all the important classes and does the training.
 '''
 
 params = {"DEFAULT_ENV_NAME": "RoboschoolPong-v1",
-              "GAMMA": 0.99,  # discount factor in Bellman update
+              "GAMMA": 0.99,  # discoutn factor in Bellman update
               "BATCH_SIZE": 256,  # how many samples at the same time (has to be big for convergence of TD 1 step)
               "LOAD_PREVIOUS ": False,  # Set to true if we want to further train a previous model
               "REPLAY_SIZE": 10000,  # size of replay buffer
@@ -34,7 +35,22 @@ params = {"DEFAULT_ENV_NAME": "RoboschoolPong-v1",
 if __name__ == '__main__':
 
     # ______________________________PREPARE AGENT ENVIRONMENT, BUFFER, NETS _______________________________
-    agent, buffer, optimizer, writer, net, tgt_net = helpfunc.start_env(params)
+    agent, buffer, net, tgt_net = helpfunc.setup_all(params)
+
+
+
+    helpfunc.fill_buffer(agent, params["REPLAY_START_SIZE"], params["REPLAY_SIZE"])
+
+    helpfunc.load_model(net, tgt_net, "RoboschoolPong-v1-best.dat", params["LOAD_PREVIOUS "])
+
+    optimizer = optim.Adam(net.parameters(), lr=params["LEARNING_RATE"])
+
+    writer = SummaryWriter(comment="-" + "batch" + str(params["BATCH_SIZE"]) + "_n" + str(agent.env.action_space.n) +
+            "_eps" + str(params["EPSILON_DECAY_LAST_FRAME"]) + "_skip" + str(4) + "learning_rate"
+                                   + str(params["LEARNING_RATE"]))
+
+    if params["LOAD_PREVIOUS "]:
+        params["EPSILON_START"] = params["EPSILON_FINAL"]
 
     # ______________________________TRAINING__________________________________________________
     print("Start training: ")

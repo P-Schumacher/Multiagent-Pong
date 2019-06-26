@@ -22,7 +22,7 @@ class action_space_discretizer (gym.Wrapper):
                 self.action_tuple.append(np.array([x[i], x[j]]))
 
     def step(self, action):
-        assert type(action) == int, "we discretized the actions! please give int"
+        assert type(action) == int, "we discretized the actions! please give int between 0 and n**2"
         return self.env.step(self.action_tuple[int(action)])
 
     def reset(self):
