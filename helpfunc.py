@@ -14,7 +14,7 @@ def start_env(params):
 
     fill_buffer(agent, params["REPLAY_START_SIZE"], params["REPLAY_SIZE"])
 
-    load_model(net, tgt_net, "RoboschoolPong-v1-best.dat", params["LOAD_PREVIOUS "])
+    load_model(net, tgt_net, "ddqn.dat", params["LOAD_PREVIOUS "])
 
     optimizer = optim.Adam(net.parameters(), lr=params["LEARNING_RATE"])
 
@@ -30,6 +30,8 @@ def start_env(params):
 
 def _setup_all(params):
     env = gym.make(params["DEFAULT_ENV_NAME"])
+    if params["selfplay"]:
+        env.unwrapped.multiplayer(env, game_server_guid="selfplayer", player_n=params["player_n"])
     env = _construct_env(env, params["ACTION_SIZE"], params["SKIP_NUMBER"])
     buffer = helpclass.ExperienceBuffer(params["REPLAY_SIZE"])
     agent = helpclass.Agent(env, buffer)
@@ -43,6 +45,7 @@ def _construct_env(env, n_actions, n_skip):
     env = wrappers.SkipEnv(env, skip=n_skip)
     return env
 
+
 # implemented in experiencebuffer.py
 def fill_buffer(agent, start_size, replay_size):
     assert start_size <= replay_size, "Start size of buffer is bigger than buffer size!"
@@ -51,6 +54,8 @@ def fill_buffer(agent, start_size, replay_size):
     for frames in range(start_size):
         action = agent.env.action_space.sample()
         new_state, reward, is_done, _ = agent.env.step(action)
+        if is_done:
+            state = agent.env.reset()
         exp = helpclass.Experience(state, action, reward, is_done, new_state)
         agent.exp_buffer.append(exp)
     print("Buffer populated!")
@@ -65,6 +70,7 @@ def load_model(net, tgt_net, file_name=None, activator=False):
         net.load_state_dict(torch.load(file_name))
         tgt_net.load_state_dict(torch.load(file_name))
         return None
+
 
 def train(params):
     agent, buffer, optimizer, writer, net, tgt_net = start_env(params)
@@ -87,7 +93,7 @@ def train(params):
 
         if (frame % params["SYNC_TARGET_FRAMES"]) == 0:
             tgt_net.load_state_dict(net.state_dict())  # Syncs target and Standard net
-            print("We are at: %7i / %7i frames" % (frame, params["NUMBER_FRAMES"]))
+            # print("We are at: %7i / %7i frames" % (frame, params["NUMBER_FRAMES"]))
             torch.save(net.state_dict(), params["DEFAULT_ENV_NAME"] + "-time_update.dat")
 
         optimizer.zero_grad()
