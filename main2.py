@@ -12,7 +12,7 @@ Main function: Defines important constants, initializes all the important classe
 params = {"DEFAULT_ENV_NAME": "RoboschoolPong-v1",
               "GAMMA": 0.99,  # discount factor in Bellman update
               "BATCH_SIZE": 256,  # how many samples at the same time (has to be big for convergence of TD 1 step)
-              "LOAD_PREVIOUS ": True,  # Set to true if we want to further train a previous model
+              "LOAD_PREVIOUS ": False,  # Set to true if we want to further train a previous model
               "REPLAY_SIZE": 10000,  # size of replay buffer
               "LEARNING_RATE": 1e-4,  # learning rate of neural network update
               "SYNC_TARGET_FRAMES": 1000,  # when to sync neural net and target network (low values destroy loss func)
@@ -78,5 +78,5 @@ if __name__ == '__main__':
 
         player_0.join()
         player_1.join()
-
-        # print("The mean episode reward over the last %i episodes was " %params["EPSILON_DECAY_LAST_FRAME"], reward)
+    else:
+        performance = helpfunc.train(params)

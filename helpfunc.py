@@ -54,10 +54,13 @@ def fill_buffer(agent, start_size, replay_size):
     for frames in range(start_size):
         action = agent.env.action_space.sample()
         new_state, reward, is_done, _ = agent.env.step(action)
-        if is_done:
-            state = agent.env.reset()
+
         exp = helpclass.Experience(state, action, reward, is_done, new_state)
         agent.exp_buffer.append(exp)
+        if is_done:
+            state = agent.env.reset()
+        else:
+            state = new_state
     print("Buffer populated!")
 
 
