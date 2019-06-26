@@ -11,7 +11,7 @@ import roboschool
 # returns a namedtuple with (state, action, reward...)
 Experience = collections.namedtuple("Experience", field_names=['state', 'action', 'reward', 'done', 'new_state'])
 
-
+# implemented in experiencebuffer.py
 class ExperienceBuffer:
     """
     Buffer of fixed capacity to handle previous experiences for bootstrap sampling.
@@ -32,6 +32,7 @@ class ExperienceBuffer:
     # the second elements of every exp tuple are in one tuple etc
 
     # TODO standardize variable type declarations
+
     def sample(self, batch_size):
         """
         Sample random batch from past experiences.
@@ -41,7 +42,7 @@ class ExperienceBuffer:
         return states, np.array(actions), np.array(rewards, dtype=np.float32), \
                np.array(dones, dtype=np.uint8), np.array(next_states)
 
-
+# implemented in pongagent.py
 class Agent:
     def __init__(self, env, exp_buffer):
         self.env = env
@@ -70,6 +71,7 @@ class Agent:
 
         # do step in the environment
         new_state, reward, is_done, _ = self.env.step(action)
+
         self.total_reward += reward
 
         exp = Experience(self.state, action, reward, is_done, new_state)
@@ -108,23 +110,26 @@ def calc_loss(batch, net, tgt_net, GAMMA, device="cpu"):
 # For larger n, on policy corrections are needed
 class Nstep_ExperienceBuffer:
     # TODO finish n step TD method by buffer
-    def __init__(self, n_steps):
+    def __init__(self, n_steps, capacity):
+        self.subbuffer = collections.deque(maxlen=n_steps)
+        self.buffer = collections.deque(maxlen=capacity)
         self.counter = 0
-        self.buffer = 0
-        self.subbuffer = 0
-        pass
 
     def __len__(self):
-        pass
+        return len(self.buffer)
 
-    def append(self):
-        counter += 1
-        subbuffer.append()
-        if counter == 4:
-            buffer.append()
+    def append(self, experience):
+        self.counter += 1
+        self.subbuffer.append()
+        if self.counter == 4:
+            self.counter = 0
+            self.buffer.append()
 
-    def sample(self):
-        pass
+    def sample(self, batch_size):
+        indices = np.random.choice(len(self.buffer), batch_size, replace=False)
+        states, actions, rewards, dones, next_states = zip(*[self.buffer[idx] for idx in indices])
+        return states, np.array(actions), np.array(rewards, dtype=np.float32), \
+               np.array(dones, dtype=np.uint8), np.array(next_states)
 
 
 if __name__ == '__main__':
