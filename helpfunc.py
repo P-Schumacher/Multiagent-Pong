@@ -8,6 +8,10 @@ import torch
 from tensorboardX import SummaryWriter
 from torch import optim
 
+def debug(exp_buffer, field):
+    for i in range(len(exp_buffer)):
+        print(exp_buffer.buffer[i][field])
+    return None
 
 def start_env(params):
     agent, buffer, net, tgt_net = _setup_all(params)
@@ -50,17 +54,19 @@ def _construct_env(env, n_actions, n_skip):
 def fill_buffer(agent, start_size, replay_size):
     assert start_size <= replay_size, "Start size of buffer is bigger than buffer size!"
     state = agent.env.reset()
-    print("Populating Buffer...")
+    state = np.array(state, copy=True)
+    # print("Populating Buffer...")
     for frames in range(start_size):
         action = agent.env.action_space.sample()
         new_state, reward, is_done, _ = agent.env.step(action)
-
+        new_state = np.array(new_state, copy=True)
         exp = helpclass.Experience(state, action, reward, is_done, new_state)
         agent.exp_buffer.append(exp)
         if is_done:
             state = agent.env.reset()
         else:
             state = new_state
+        state = np.array(state, copy=True)
     print("Buffer populated!")
 
 
@@ -78,7 +84,7 @@ def load_model(net, tgt_net, file_name=None, activator=False):
 def train(params):
     agent, buffer, optimizer, writer, net, tgt_net = start_env(params)
     # ______________________________TRAINING__________________________________________________
-    print("Start training: ")
+    # print("Start training: ")
     best_reward = - 1000  # Initialize at a very low value
     reward = []
     for frame in range(params["NUMBER_FRAMES"]):
@@ -109,6 +115,6 @@ def train(params):
         writer.add_scalar("epsilon", epsilon, frame)
 
     writer.close()
-    print("End training!")
+    # print("End training!")
     torch.save(net.state_dict(), params["DEFAULT_ENV_NAME"] + "end_of_training.dat")
     return np.mean(reward[:params["EPSILON_DECAY_LAST_FRAME"]])

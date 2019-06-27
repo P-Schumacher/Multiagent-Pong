@@ -6,7 +6,7 @@ import wrappers
 import gym.wrappers
 import time
 
-RECORD = True  # do you want to record?
+RECORD = False  # do you want to record?
 
 
 def play(env, net, recorder, video):
@@ -34,7 +34,10 @@ player_n = int(sys.argv[2])
 env = gym.make("RoboschoolPong-v1")
 env.unwrapped.multiplayer(env, game_server_guid=sys.argv[1], player_n=player_n)
 net = DQN(13, 9)
-net.load_state_dict(torch.load("ddqn.dat"))
+if player_n:
+	net.load_state_dict(torch.load("../RoboschoolPong-v1-time_update.dat"))
+else:
+	net.load_state_dict(torch.load("../ddqn.dat"))
 env = wrappers.action_space_discretizer(env, 3)
 
 if RECORD and player_n == 0:

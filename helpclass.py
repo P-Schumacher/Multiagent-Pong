@@ -51,6 +51,7 @@ class Agent:
 
     def _reset(self):
         self.state = self.env.reset()
+        self.state = np.array(self.state, copy=True)
         self.total_reward = 0.0
 
     def play_step(self, net, epsilon=0.0, device="cpu"):
@@ -63,7 +64,7 @@ class Agent:
         if np.random.random() < epsilon:
             action = self.env.action_space.sample()
         else:
-            state_a = np.array([self.state], copy=False)
+            state_a = np.array([self.state], copy=True)
             state_v = torch.FloatTensor(state_a).to(device)
             q_vals_v = net(state_v)
             _, act_v = torch.max(q_vals_v, dim=1)
@@ -71,7 +72,7 @@ class Agent:
 
         # do step in the environment
         new_state, reward, is_done, _ = self.env.step(action)
-
+        new_state = np.array(new_state, copy=True)
         self.total_reward += reward
 
         exp = Experience(self.state, action, reward, is_done, new_state)
