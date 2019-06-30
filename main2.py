@@ -12,7 +12,7 @@ Main function: Defines important constants, initializes all the important classe
 params = {"DEFAULT_ENV_NAME": "RoboschoolPong-v1",
               "GAMMA": 0.99,  # discount factor in Bellman update
               "BATCH_SIZE": 256,  # how many samples at the same time (has to be big for convergence of TD 1 step)
-              "LOAD_PREVIOUS ": True,  # Set to true if we want to further train a previous model
+              "LOAD_PREVIOUS ": False,  # Set to true if we want to further train a previous model
               "REPLAY_SIZE": 10000,  # size of replay buffer
               "LEARNING_RATE": 1e-4,  # learning rate of neural network update
               "SYNC_TARGET_FRAMES": 1000,  # when to sync neural net and target network (low values destroy loss func)
@@ -27,7 +27,7 @@ params = {"DEFAULT_ENV_NAME": "RoboschoolPong-v1",
               "double": True,
               "selfplay": True,
               "player_n": None,
-              "selfsync": 1000}
+              "selfsync": 100000}
 
 # cpu faster than cuda, network is so small that the time needed to load it into the gpu is larger than
 # the gained time of parallel computing
@@ -40,27 +40,25 @@ def play(obs, net):
     return action
 
 
-def multiplayer_agent_player_0(params):
+def multiplayer_agent_player_0(params, queue):
     params["player_n"] = 0
-    reward = helpfunc.train(params)
+    reward = helpfunc.train(params, queue)
     return reward
 
 
-def multiplayer_agent_player_1(params, n):
-    params["player_n"] = n
+def multiplayer_agent_player_1(params, queue):
+    params["player_n"] = 1
     env = gym.make(params["DEFAULT_ENV_NAME"])
     if params["selfplay"]:
         env.unwrapped.multiplayer(env, game_server_guid="selfplayer", player_n=params["player_n"])
     env = helpfunc._construct_env(env, params["ACTION_SIZE"], params["SKIP_NUMBER"])
     net = dqn_model.DQN(env.observation_space.shape[0], env.action_space.n).to(params["device"])
-    n = 0
-    net.load_state_dict(torch.load("ddqn.dat"))
     while 1:
         obs = env.reset()
         while 1:
-            # if (n % params["selfsync"]) == 0:
-            #     net.load_state_dict(torch.load("RoboschoolPong-v1-time_update.dat"))
-            n += 1
+            if not queue.empty():
+                net_state = queue.get()
+                net.load_state_dict(net_state)
             action = play(obs, net)
             obs, reward, done, _ = env.step(action)
             if done:
@@ -74,8 +72,10 @@ if __name__ == '__main__':
         import torch.multiprocessing as mp
         game = roboschool.gym_pong.PongSceneMultiplayer()
         gameserver = roboschool.multiplayer.SharedMemoryServer(game, "selfplayer", want_test_window=False)
-        player_0 = mp.Process(target=multiplayer_agent_player_0, args=(params,))
-        player_1 = mp.Process(target=multiplayer_agent_player_1, args=(params, 1))
+
+        queue = mp.Queue(1)
+        player_0 = mp.Process(target=multiplayer_agent_player_0, args=(params, queue))
+        player_1 = mp.Process(target=multiplayer_agent_player_1, args=(params, queue))
 
         player_0.start()
         player_1.start()

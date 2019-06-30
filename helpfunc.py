@@ -81,7 +81,7 @@ def load_model(net, tgt_net, file_name=None, activator=False):
         return None
 
 
-def train(params):
+def train(params, queue):
     agent, buffer, optimizer, writer, net, tgt_net = start_env(params)
     # ______________________________TRAINING__________________________________________________
     # print("Start training: ")
@@ -104,6 +104,7 @@ def train(params):
             tgt_net.load_state_dict(net.state_dict())  # Syncs target and Standard net
             # print("We are at: %7i / %7i frames" % (frame, params["NUMBER_FRAMES"]))
             torch.save(net.state_dict(), params["DEFAULT_ENV_NAME"] + "-time_update.dat")
+            queue.put(net.state_dict())
 
         optimizer.zero_grad()
         batch = buffer.sample(params["BATCH_SIZE"])
