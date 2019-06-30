@@ -45,8 +45,14 @@ class ExperienceBuffer:
         """
         nsamples = self.buffer.maxlen
         state = env.reset()
+        state = np.array(state, copy=True)
         for frames in range(nsamples):
             action = env.action_space.sample()
             new_state, reward, is_done, _ = env.step(action)
+            new_state = np.array(new_state, copy=True)
             exp = Experience(state, action, reward, is_done, new_state)
             self.append(exp)
+            state = new_state
+            if is_done:
+                state = env.reset()
+                state = np.array(state, copy=True)

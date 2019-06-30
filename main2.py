@@ -26,10 +26,9 @@ params = {"env_name": "RoboschoolPong-v1",
             "eps_start": 1,
             "eps_end": 0.02,
             "device": "cpu",
-              "double": True,
-              "selfplay": True,
-              "player_n": 0}
-              "device": "cpu",
+            "double": True,
+            "selfplay": True,
+            "player_n": 0}
 
 # cpu faster than cuda, network is so small that the time needed to load it into the gpu is larger than
 # the gained time of parallel computing
@@ -49,8 +48,8 @@ if __name__ == '__main__':
         gameserver = roboschool.multiplayer.SharedMemoryServer(game, "selfplayer", want_test_window=False)
 
         mp.set_start_method('spawn')
-        env_tmp = gym.make(params["DEFAULT_ENV_NAME"])
-        net = dqn_model.DQN(env_tmp.observation_space.shape[0], params["ACTION_SIZE"]**2).to(device=params["device"])
+        env_tmp = gym.make(params["env_name"])
+        net = dqn_model.DQN(env_tmp.observation_space.shape[0], params["nactions"]**2).to(device=params["device"])
         '''
         share_memory() moves the NN to the system shared memory, it can then be accessed by both processes. 
         This is not necessary when using cuda, because the GPU memory is shared by default. It becomes a no-op on GPU.
@@ -67,6 +66,6 @@ if __name__ == '__main__':
             player_0.join()
             player_1.join()
     else:
-        env_tmp = gym.make(params["DEFAULT_ENV_NAME"])
-        net = dqn_model.DQN(env_tmp.observation_space.shape[0], params["ACTION_SIZE"] ** 2).to(device=params["device"])
+        env_tmp = gym.make(params["env_name"])
+        net = dqn_model.DQN(env_tmp.observation_space.shape[0], params["nactions"] ** 2).to(device=params["device"])
         performance = helpfunc.train(params, net)

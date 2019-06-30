@@ -7,7 +7,8 @@ from buffers import ExperienceBuffer
 from dqn_model import DQN, calc_loss
 from torch import optim
 from tensorboardX import SummaryWriter
-
+import roboschool.multiplayer
+import torch.multiprocessing as mp
 
 # TODO: split parameters into simulation parameters and training parameters to pass to run?
 class Simulation:
@@ -28,6 +29,8 @@ class Simulation:
         self.skip_frames = params["skip_frames"]
         self.nactions = params["nactions"]
         self.messages_enabled = params["messages_enabled"]
+        self.selfplay = params["selfplay"]
+        self.player_n = 0
         #### qnet model
         self.learning_rate = params["learning_rate"]
         self.sync = params["sync"]
@@ -45,6 +48,12 @@ class Simulation:
         self.env = self._create_environment()
         self.agent = self._create_agent()
         self.net, self.tgt_net, self.optimizer = self._create_model()
+        print('ok')
+        if self.selfplay:
+            game = roboschool.gym_pong.PongSceneMultiplayer()
+            self.gameserver = roboschool.multiplayer.SharedMemoryServer(game, "selfplayer", want_test_window=False)
+            mp.set_start_method('spawn')
+            self.net.share_memory()
         self.writer = SummaryWriter(comment="-" + "batch" + str(self.batch_size)
                                             + "_n" + str(self.env.action_space.n)
                                             + "_eps" + str(self.eps_decay_rate)
@@ -59,6 +68,8 @@ class Simulation:
         :return: env
         """
         env = gym.make(self.env_name)
+        if self.selfplay:
+            env.unwrapped.multiplayer(env, game_server_guid="selfplayer", player_n=self.player_n)
         env = wrappers.action_space_discretizer(env, n=self.nactions)
         env = wrappers.SkipEnv(env, skip=self.skip_frames)
         return env
@@ -84,14 +95,61 @@ class Simulation:
 
         :return: net, tgt_net, optimizer
         """
-        net = DQN(self.env.observation_space.shape[0], self.env.action_space.n).to(self.device)
-        tgt_net = DQN(self.env.observation_space.shape[0], self.env.action_space.n).to(self.device)
+        net = DQN(self.env.observation_space.shape[0], self.nactions**2).to(self.device)
+        tgt_net = DQN(self.env.observation_space.shape[0], self.nactions**2).to(self.device)
         if self.load_from is not None:
             assert type(self.load_from) == str, "Name of model to be loaded has to be a string!"
             net.load_state_dict(torch.load(self.load_from))
             tgt_net.load_state_dict(torch.load(self.load_from))
         optimizer = optim.Adam(net.parameters(), lr=self.learning_rate)
         return net, tgt_net, optimizer
+
+    def train_self(self, player_number):
+        self.player_n= player_number
+        performance = self.train()
+        return performance
+
+    def train(self):
+        if self.messages_enabled:
+            print("Start training: ")
+        best_reward = - 1000  # Initialize at a very low value
+        reward = []
+        for frame in range(self.training_frames):
+            epsilon = max(self.eps_end, self.eps_start - frame / self.eps_decay_rate)
+            ep_reward = self.agent.play_step(self.net, epsilon, self.device)
+            if ep_reward:
+                reward.append(ep_reward)
+                self.writer.add_scalar("episode_reward", ep_reward, frame)
+                self.writer.add_scalar("mean100_reward", np.mean(reward[-100:]), frame)
+
+                if ep_reward > best_reward:
+                    best_reward = ep_reward
+                    self.writer.add_scalar("best reward", best_reward, frame)
+                    if self.player_n == 0:
+                        torch.save(self.net.state_dict(), self.env_name + "-best.dat")
+
+            if (frame % self.sync) == 0:
+                self.tgt_net.load_state_dict(self.net.state_dict())  # Syncs target and Standard net
+                if self.messages_enabled:
+                    print("We are at: %7i / %7i frames" % (frame, self.training_frames))
+                if self.player_n == 0:
+                    torch.save(self.net.state_dict(), self.env_name + "-time_update.dat")
+
+            self.optimizer.zero_grad()
+            batch = self.agent.exp_buffer.sample(self.batch_size)
+            loss_t = calc_loss(batch, self.net, self.tgt_net, self.gamma, self.device)
+            loss_t.backward()
+            self.optimizer.step()
+
+            self.writer.add_scalar("loss", loss_t, frame)
+            self.writer.add_scalar("epsilon", epsilon, frame)
+
+        self.writer.close()
+        if self.messages_enabled:
+            print("End training!")
+        torch.save(self.net.state_dict(), self.env_name + "end_of_training.dat")
+
+        return np.mean(reward[-len(reward)//2:])
 
 # TODO: clean this function!
     def run(self, mode="play"):
@@ -101,44 +159,19 @@ class Simulation:
         :return: mean reward over all episodes with eps_end
         """
         if mode == "train":
-            if self.messages_enabled:
-                print("Start training: ")
-            best_reward = - 1000  # Initialize at a very low value
-            reward = []
-            for frame in range(self.training_frames):
-                epsilon = max(self.eps_end, self.eps_start - frame / self.eps_decay_rate)
-                ep_reward = self.agent.play_step(self.net, epsilon, self.device)
-                if ep_reward:
-                    reward.append(ep_reward)
-                    self.writer.add_scalar("episode_reward", ep_reward, frame)
-                    self.writer.add_scalar("mean100_reward", np.mean(reward[-100:]), frame)
-
-                    if ep_reward > best_reward:
-                        best_reward = ep_reward
-                        self.writer.add_scalar("best reward", best_reward, frame)
-                        torch.save(self.net.state_dict(), self.env_name + "-best.dat")
-
-                if (frame % self.sync) == 0:
-                    self.tgt_net.load_state_dict(self.net.state_dict())  # Syncs target and Standard net
-                    if self.messages_enabled:
-                        print("We are at: %7i / %7i frames" % (frame, self.training_frames))
-                    torch.save(self.net.state_dict(), self.env_name + "-time_update.dat")
-
-                self.optimizer.zero_grad()
-                batch = self.agent.exp_buffer.sample(self.batch_size)
-                loss_t = calc_loss(batch, self.net, self.tgt_net, self.gamma, self.device)
-                loss_t.backward()
-                self.optimizer.step()
-
-                self.writer.add_scalar("loss", loss_t, frame)
-                self.writer.add_scalar("epsilon", epsilon, frame)
-
-            self.writer.close()
-            if self.messages_enabled:
-                print("End training!")
-            torch.save(self.net.state_dict(), self.env_name + "end_of_training.dat")
-
-            return np.mean(reward[-len(reward)//2:])
+            if self.selfplay:
+                self.net.share_memory()
+                player_0 = mp.Process(target=self.train_self, args=(0))
+                player_1 = mp.Process(target=self.train_self, args=(1))
+                player_0.start()
+                player_1.start()
+                try:
+                    self.gameserver.serve_forever()
+                finally:
+                    player_0.join()
+                    player_1.join()
+            else:
+                self.train()
 
         elif mode == "play":
             assert type(self.load_from) == str, "Name of model to load not correctly given"
