@@ -3,7 +3,7 @@ import dqn_model
 import gym
 import torch
 import time
-# TODO multiplayer training, automated hyperparameter search, double q learning, n step q learning
+# TODO automated hyperparameter search, n step q learning
 
 '''
 Main function: Defines important constants, initializes all the important classes and does the training.
@@ -26,43 +26,15 @@ params = {"DEFAULT_ENV_NAME": "RoboschoolPong-v1",
               "device": "cpu",
               "double": True,
               "selfplay": True,
-              "player_n": None,
-              "selfsync": 100000}
+              "player_n": 0}
 
 # cpu faster than cuda, network is so small that the time needed to load it into the gpu is larger than
 # the gained time of parallel computing
 
 
-def play(obs, net):
-    action = net(torch.tensor(obs, dtype=torch.float32)).max(0)[1]
-    action = action.item()
-    action = int(action)
-    return action
-
-
-def multiplayer_agent_player_0(params, queue):
-    params["player_n"] = 0
-    reward = helpfunc.train(params, queue)
-    return reward
-
-
-def multiplayer_agent_player_1(params, queue):
-    params["player_n"] = 1
-    env = gym.make(params["DEFAULT_ENV_NAME"])
-    if params["selfplay"]:
-        env.unwrapped.multiplayer(env, game_server_guid="selfplayer", player_n=params["player_n"])
-    env = helpfunc._construct_env(env, params["ACTION_SIZE"], params["SKIP_NUMBER"])
-    net = dqn_model.DQN(env.observation_space.shape[0], env.action_space.n).to(params["device"])
-    while 1:
-        obs = env.reset()
-        while 1:
-            if not queue.empty():
-                net_state = queue.get()
-                net.load_state_dict(net_state)
-            action = play(obs, net)
-            obs, reward, done, _ = env.step(action)
-            if done:
-                break
+def multiplayer_agent_player(params, net, player_number):
+    params["player_n"] = player_number
+    reward = helpfunc.train(params, net)
     return reward
 
 
@@ -73,16 +45,25 @@ if __name__ == '__main__':
         game = roboschool.gym_pong.PongSceneMultiplayer()
         gameserver = roboschool.multiplayer.SharedMemoryServer(game, "selfplayer", want_test_window=False)
 
-        queue = mp.Queue(1)
-        player_0 = mp.Process(target=multiplayer_agent_player_0, args=(params, queue))
-        player_1 = mp.Process(target=multiplayer_agent_player_1, args=(params, queue))
+        mp.set_start_method('spawn')
+        env_tmp = gym.make(params["DEFAULT_ENV_NAME"])
+        net = dqn_model.DQN(env_tmp.observation_space.shape[0], params["ACTION_SIZE"]**2).to(device=params["device"])
+        '''
+        share_memory() moves the NN to the system shared memory, it can then be accessed by both processes. 
+        This is not necessary when using cuda, because the GPU memory is shared by default. It becomes a no-op on GPU.
+        '''
+        net.share_memory()
+        player_0 = mp.Process(target=multiplayer_agent_player, args=(params, net, 0))
+        player_1 = mp.Process(target=multiplayer_agent_player, args=(params, net, 1))
 
         player_0.start()
         player_1.start()
-
-        gameserver.serve_forever()
-
-        player_0.join()
-        player_1.join()
+        try:  # serve_forever() runs forever until it crashes or we interrupt. (try: finally:) closes the subprocesses
+            gameserver.serve_forever()
+        finally:
+            player_0.join()
+            player_1.join()
     else:
-        performance = helpfunc.train(params)
+        env_tmp = gym.make(params["DEFAULT_ENV_NAME"])
+        net = dqn_model.DQN(env_tmp.observation_space.shape[0], params["ACTION_SIZE"] ** 2).to(device=params["device"])
+        performance = helpfunc.train(params, net)

@@ -8,13 +8,9 @@ import torch
 from tensorboardX import SummaryWriter
 from torch import optim
 
-def debug(exp_buffer, field):
-    for i in range(len(exp_buffer)):
-        print(exp_buffer.buffer[i][field])
-    return None
 
-def start_env(params):
-    agent, buffer, net, tgt_net = _setup_all(params)
+def start_env(params, net):
+    agent, buffer, tgt_net = _setup_all(params)
 
     fill_buffer(agent, params["REPLAY_START_SIZE"], params["REPLAY_SIZE"])
 
@@ -22,14 +18,14 @@ def start_env(params):
 
     optimizer = optim.Adam(net.parameters(), lr=params["LEARNING_RATE"])
 
-    writer = SummaryWriter(comment="-" + "batch" + str(params["BATCH_SIZE"]) + "_n" + str(agent.env.action_space.n) +
+    writer = SummaryWriter(comment="player" + str(params["player_n"]) + "-" + "batch" + str(params["BATCH_SIZE"]) + "_n" + str(agent.env.action_space.n) +
                                    "_eps" + str(params["EPSILON_DECAY_LAST_FRAME"]) + "_skip" + str(4) + "learning_rate"
                                    + str(params["LEARNING_RATE"]))
 
     if params["LOAD_PREVIOUS "]:
         params["EPSILON_START"] = params["EPSILON_FINAL"]
 
-    return agent, buffer, optimizer, writer, net, tgt_net
+    return agent, buffer, optimizer, writer, tgt_net
 
 
 def _setup_all(params):
@@ -39,9 +35,8 @@ def _setup_all(params):
     env = _construct_env(env, params["ACTION_SIZE"], params["SKIP_NUMBER"])
     buffer = helpclass.ExperienceBuffer(params["REPLAY_SIZE"])
     agent = helpclass.Agent(env, buffer)
-    net = dqn_model.DQN(env.observation_space.shape[0], env.action_space.n).to(params["device"])
     tgt_net = dqn_model.DQN(env.observation_space.shape[0], env.action_space.n).to(params["device"])
-    return agent, buffer, net, tgt_net
+    return agent, buffer, tgt_net
 
 
 def _construct_env(env, n_actions, n_skip):
@@ -81,8 +76,8 @@ def load_model(net, tgt_net, file_name=None, activator=False):
         return None
 
 
-def train(params, queue):
-    agent, buffer, optimizer, writer, net, tgt_net = start_env(params)
+def train(params, net):
+    agent, buffer, optimizer, writer, tgt_net = start_env(params, net)
     # ______________________________TRAINING__________________________________________________
     # print("Start training: ")
     best_reward = - 1000  # Initialize at a very low value
@@ -98,17 +93,18 @@ def train(params, queue):
             if ep_reward > best_reward:
                 best_reward = ep_reward
                 writer.add_scalar("best reward", best_reward, frame)
-                torch.save(net.state_dict(), params["DEFAULT_ENV_NAME"] + "-best.dat")
+                if params["player_n"] == 0:
+                    torch.save(net.state_dict(), params["DEFAULT_ENV_NAME"] + "-best.dat")
 
         if (frame % params["SYNC_TARGET_FRAMES"]) == 0:
             tgt_net.load_state_dict(net.state_dict())  # Syncs target and Standard net
             # print("We are at: %7i / %7i frames" % (frame, params["NUMBER_FRAMES"]))
-            torch.save(net.state_dict(), params["DEFAULT_ENV_NAME"] + "-time_update.dat")
-            queue.put(net.state_dict())
+            if params["player_n"] == 0:
+                torch.save(net.state_dict(), params["DEFAULT_ENV_NAME"] + "-time_update.dat")
 
         optimizer.zero_grad()
         batch = buffer.sample(params["BATCH_SIZE"])
-        loss_t = helpclass.calc_loss(batch, net, tgt_net, params["GAMMA"], params["device"])
+        loss_t = helpclass.calc_loss(batch, net, tgt_net, params["GAMMA"], params["double"], params["device"])
         loss_t.backward()
         optimizer.step()
 
