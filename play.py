@@ -10,13 +10,13 @@ This function is for seeing models in action, it uses a slightly modified versio
 timeouts and longer episode lengths
 '''
 
-DEFAULT_ENV_NAME = "RoboschoolPong-v1"  # Use a longer version of Pong for demonstration (needs to be defined in source)
-MAKE_VIDEO = True  # Set true or false here to record video OR render, not both
+DEFAULT_ENV_NAME = "RoboschoolPong-v8"  # Use a longer version of Pong for demonstration (needs to be defined in source)
+MAKE_VIDEO = False  # Set true or false here to record video OR render, not both
 
 env = gym.make(DEFAULT_ENV_NAME)
-env = wrappers.action_space_discretizer(env, 10)
+env = wrappers.action_space_discretizer(env, 3)
 net = DQN(env.observation_space.shape[0], env.action_space.n)
-net.load_state_dict(torch.load("RoboschoolPong-v1-best_old.dat"))
+net.load_state_dict(torch.load("RoboschoolPong-v1-time_update.dat"))
 env.reset()
 recorder = gym.wrappers.monitoring.video_recorder.VideoRecorder(env, "./recording.mp4", enabled=MAKE_VIDEO)
 still_open = True
@@ -29,7 +29,7 @@ for i in range(1):
         action = action.item()
         action = int(action)
         if not MAKE_VIDEO:
-            still_open = env.render("rgb-array")
+            still_open = env.render()
         if not still_open:
             break
         obs, reward, done, _ = env.step(action)
