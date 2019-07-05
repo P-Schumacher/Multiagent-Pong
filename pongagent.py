@@ -15,9 +15,10 @@ import torch
 import numpy as np
 
 class Pongagent:
-    def __init__(self, env, exp_buffer:ExperienceBuffer):
+    def __init__(self, env, player_n: int, exp_buffer:ExperienceBuffer):
         self.env = env
         self.exp_buffer = exp_buffer
+        self.number = player_n
         #self.exp_buffer.fill = lambda: exp_buffer.fill(self.env)   # some sort of recursion?
         self._reset()
 

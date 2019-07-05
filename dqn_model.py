@@ -32,7 +32,7 @@ def calc_loss(batch, net, tgt_net, GAMMA, device="cpu"):
     states_v = torch.tensor(states, dtype=torch.float32).to(device)
     next_states_v = torch.tensor(next_states, dtype=torch.float32).to(device)
     actions_v = torch.tensor(actions).to(device)
-    rewards_v = torch.tensor(rewards).to(device)
+    rewards_v = torch.tensor(rewards, dtype=torch.float32).to(device)
     done_mask = torch.ByteTensor(dones).to(device)
 
     state_action_values = net(states_v).gather(1, actions_v.unsqueeze(-1)).squeeze(-1)

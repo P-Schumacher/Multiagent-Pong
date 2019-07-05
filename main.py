@@ -13,10 +13,10 @@ params = {"env_name": "RoboschoolPong-v1",
             "load_from": None,  # Set to filename as string if previous model should be loaded
             "replay_size": 10000,  # size of replay buffer
             "learning_rate": 1e-4,  # learning rate of neural network update
-            "sync": 10000,  # when to sync neural net and target network (low values destroy loss func)
+            "sync": 1000,  # when to sync neural net and target network (low values destroy loss func)
             "eps_decay_rate": 10000,  # how fast does the epsilon exploration decay
-            "training_frames": 300000,  # total number of training frames
-            "nactions": 10,  # network doesnt seem to care much about action_space discretization...
+            "training_frames": 500000,  # total number of training frames
+            "nactions": 2,  # network doesnt seem to care much about action_space discretization...
             "skip_frames": 4,  # how many frames are skipped with repeated actions != n step DQN
             "eps_start": 1,
             "eps_end": 0.02,
@@ -27,6 +27,6 @@ params = {"env_name": "RoboschoolPong-v1",
             "messages_enabled": True}
 
 
-
-sim = pongsimulation.Simulation(params)
-sim.run("train")
+if __name__ == '__main__':
+    sim = pongsimulation.PongSelfplaySimulation(params)
+    sim.run("train")

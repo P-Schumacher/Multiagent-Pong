@@ -79,7 +79,7 @@ def load_model(net, tgt_net, file_name=None, activator=False):
 def train(params, net):
     agent, buffer, optimizer, writer, tgt_net = start_env(params, net)
     # ______________________________TRAINING__________________________________________________
-    # print("Start training: ")
+    print("Start training: ")
     best_reward = - 1000  # Initialize at a very low value
     reward = []
     for frame in range(params["NUMBER_FRAMES"]):
