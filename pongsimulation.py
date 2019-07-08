@@ -56,6 +56,8 @@ class Simulation:
             :return: env
             """
         env = gym.make(self.env_name)
+        if self.selfplay:
+            env.unwrapped.multiplayer(env, game_server_guid="selfplayer", player_n=self.player_n)
         env = wrappers.action_space_discretizer(env, n=self.nactions)
         env = wrappers.SkipEnv(env, skip=self.skip_frames)
         return env
@@ -91,8 +93,6 @@ class Simulation:
 
     def _init_non_shared(self, player_n):
         env = self._create_environment()
-        if self.selfplay:
-            env.unwrapped.multiplayer(env, game_server_guid="selfplayer", player_n=player_n)
         tgt_net, optimizer = self._create_model()
         agent = self._create_agent(env)
         writer = SummaryWriter(comment="-"
@@ -117,6 +117,7 @@ class Simulation:
             print("Buffer_populated!")
 
     def train(self, net, player_n):
+        self.net = net
         env, agent, tgt_net, optimizer, writer = self._init_non_shared(player_n)
         self._fill_buffer(agent)
         if self.messages_enabled:
