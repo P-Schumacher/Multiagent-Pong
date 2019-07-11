@@ -22,11 +22,10 @@ params = {"env_name": "RoboschoolPong-v1",
             "eps_end": 0.02,
             "device": "cpu",
             "double": True,
-            "selfplay": False,
+            "selfplay": True,
             "player_n": 0,
             "messages_enabled": True,
-            "nstep": 2,
-            "double": True}
+            "nstep": 2}
 
 
 if __name__ == '__main__':
