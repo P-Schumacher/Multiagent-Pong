@@ -3,6 +3,7 @@ import gym
 import torch
 import numpy as np
 import pongagent
+from buffers import Extendedbuffer
 from buffers import ExperienceBuffer
 from dqn_model import DQN, calc_loss
 from torch import optim
@@ -37,15 +38,16 @@ class Simulation:
         #### buffer
         self.batch_size = params["batch_size"]
         self.replay_size = params["replay_size"]
+        self.nstep = params["nstep"]
         #### agent model
         self.gamma = params["gamma"]
         self.eps_start = params["eps_start"]
         self.eps_end = params["eps_end"]
         self.eps_decay_rate = params["eps_decay_rate"]
         self.player_n = player_n
-
+        self.double = params["double"]
         # initialize the simulation with shared properties
-        self.env = gym.make(self.env_name) #environment, agent etc. can"t be created jointly in a server simulation
+        self.env = gym.make(self.env_name)   # environment, agent etc. can"t be created jointly in a server simulation
         self.net = DQN(self.env.observation_space.shape[0], self.nactions**2).to(self.device)
 
     def _create_environment(self):
@@ -68,13 +70,9 @@ class Simulation:
 
             :return: agent
             """
-        buffer = ExperienceBuffer(self.replay_size)
+        # buffer = ExperienceBuffer(self.replay_size)
+        buffer = Extendedbuffer(self.replay_size, nstep=self.nstep, gamma=self.gamma)
         agent = pongagent.Pongagent(env, self.player_n, buffer)
-        #       if self.messages_enabled:
-        #           print("Populating Buffer ...")
-        #       agent.exp_buffer.fill(self.env)
-        #       if self.messages_enabled:
-        #           print("Buffer_populated!")
         return agent
 
     def _create_model(self):
@@ -104,25 +102,19 @@ class Simulation:
                                        + "learning_rate" + str(self.learning_rate))
         return env, agent, tgt_net, optimizer, writer
 
-    #   def train_self(self, player_number):
-    #       self.player_n = player_number
-    #       performance = self.train()
-    #       return performance
-
     def _fill_buffer(self, agent):
         if self.messages_enabled:
             print("Player populating Buffer ...")
-        agent.exp_buffer.fill(agent.env)
+        agent.exp_buffer.fill(agent.env, self.replay_size, self.nstep)
         if self.messages_enabled:
             print("Buffer_populated!")
 
-    def train(self, net, player_n):
+    def train(self, net, player_n=0):
         self.net = net
         env, agent, tgt_net, optimizer, writer = self._init_non_shared(player_n)
         self._fill_buffer(agent)
         if self.messages_enabled:
             print("Player %i start training: " %player_n)
-        best_reward = - 1000  # Initialize at a very low value
         reward = []
         for frame in range(self.training_frames):
             epsilon = max(self.eps_end, self.eps_start - frame / self.eps_decay_rate)
@@ -131,13 +123,6 @@ class Simulation:
                 reward.append(ep_reward)
                 writer.add_scalar("episode_reward", ep_reward, frame)
                 writer.add_scalar("mean100_reward", np.mean(reward[-100:]), frame)
-
-                if ep_reward > best_reward:
-                    best_reward = ep_reward
-                    writer.add_scalar("best reward", best_reward, frame)
-                    if player_n == 0:
-                        torch.save(net.state_dict(), self.env_name + "-best.dat")
-
             if (frame % self.sync) == 0:
                 tgt_net.load_state_dict(net.state_dict())  # Syncs target and Standard net
                 if self.messages_enabled:
@@ -147,7 +132,7 @@ class Simulation:
 
             optimizer.zero_grad()
             batch = agent.exp_buffer.sample(self.batch_size)
-            loss_t = calc_loss(batch, net, tgt_net, self.gamma, self.device)
+            loss_t = calc_loss(batch, net, tgt_net, self.gamma**self.nstep, self.double, self.device)
             loss_t.backward()
             optimizer.step()
 
@@ -169,26 +154,17 @@ class Simulation:
         :return: mean reward over all episodes with eps_end
         """
         if mode == "train":
-            # if self.selfplay:
-            #     net.share_memory()
-            #     player_0 = mp.Process(target=self.train_self, args=(0,))
-            #     player_1 = mp.Process(target=self.train_self, args=(1,))
-            #     player_0.start()
-            #     player_1.start()
-            #     try:
-            #         self.gameserver.serve_forever()
-            #     finally:
-            #         player_0.join()
-            #         player_1.join()
-            # else:
-            self.train(self.net, 0)
-
+            reward = self.train(self.net)
+            return reward
         elif mode == "play":
-            assert type(self.load_from) == str, "Name of model to load not correctly given"
             pass
 
         else:
-            print("Mode unknown")
+            raise Exception("Mode should be either play or train")
+
+
+
+
 
 class PongSelfplaySimulation(Simulation):
 
@@ -203,7 +179,7 @@ class PongSelfplaySimulation(Simulation):
             pass
         self.net.share_memory()
 
-    def run(self, mode="play"):
+    def run(self, mode="train"):
         self.net.share_memory()
         sim0 = Simulation(self.params, 0)
         sim1 = Simulation(self.params, 1)
@@ -218,10 +194,3 @@ class PongSelfplaySimulation(Simulation):
             player_1.join()
 
 
-
-def multiplayer_setup(self):
-    game = roboschool.gym_pong.PongSceneMultiplayer()
-    self.gameserver = roboschool.multiplayer.SharedMemoryServer(game, "selfplayer", want_test_window=False)
-    mp.set_start_method('spawn')
-    self.net.share_memory()
-    print("multiplayer_setup done")

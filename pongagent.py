@@ -19,7 +19,6 @@ class Pongagent:
         self.env = env
         self.exp_buffer = exp_buffer
         self.number = player_n
-        #self.exp_buffer.fill = lambda: exp_buffer.fill(self.env)   # some sort of recursion?
         self._reset()
 
     def _reset(self):
