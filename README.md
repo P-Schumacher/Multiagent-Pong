@@ -1,3 +1,4 @@
 # Student Project for the Reinforcement Learning Course of Prof. Jochen Triesch
-A student project comparing different Reinforcement Learning approaches on the OpenAi Gym Roboschool Pong environment.
-Using Deep Q Learning, REINFORCE Policy Gradients and Self Play
+A student project comparing two different Reinforcement Learning approaches on the OpenAi Gym Roboschool Pong environment.
+During this project, a team of 4 students implemented two reinforcement learning algorithms to compare them in a multi-agent environment. As most RL algorithms are only compared by their respective performance in a given environment, we found it more interesting to pit them against each other in a multi-agent tournament.
+The two algorithms which we chose were the REINFORCE policy gradient (William 1988) and the Deep-Q Network (Mnih et al. 2015) as those two are representative of two different families of reinforcement learning algorithms. In this repository, DQN was implemented by Frederike Kubandt and Pierre Schumacher.
