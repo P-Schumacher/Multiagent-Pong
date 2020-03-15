@@ -11,11 +11,11 @@ timeouts and longer episode lengths
 NOT WORKING
 '''
 
-DEFAULT_ENV_NAME = "RoboschoolPong-v8"  # Use a longer version of Pong for demonstration (needs to be defined in source)
+DEFAULT_ENV_NAME = "RoboschoolPong-v1"  # Use a longer version of Pong for demonstration (needs to be defined in source)
 MAKE_VIDEO = False  # Set true or false here to record video OR render, not both
 
 env = gym.make(DEFAULT_ENV_NAME)
-env = wrappers.action_space_discretizer(env, 3)
+env = wrappers.action_space_discretizer(env, 2)
 net = DQN(env.observation_space.shape[0], env.action_space.n)
 net.load_state_dict(torch.load("RoboschoolPong-v1-time_update.dat"))
 env.reset()

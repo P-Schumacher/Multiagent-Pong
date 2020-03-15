@@ -10,7 +10,7 @@ from torch import optim
 from tensorboardX import SummaryWriter
 import roboschool.multiplayer
 import torch.multiprocessing as mp
-
+from pudb import set_trace
 # TODO: split parameters into simulation parameters and training parameters to pass to run?
 class Simulation:
     """
@@ -157,13 +157,11 @@ class Simulation:
             reward = self.train(self.net)
             return reward
         elif mode == "play":
+            # Run play.py to see model in action
             pass
 
         else:
             raise Exception("Mode should be either play or train")
-
-
-
 
 
 class PongSelfplaySimulation(Simulation):

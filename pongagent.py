@@ -37,7 +37,7 @@ class Pongagent:
             action = self.env.action_space.sample()
         else:
             state_a = np.array([self.state], copy=True)
-            state_v = torch.FloatTensor(state_a).to(device)
+            state_v = torch.FloatTensor(state_a) #.to(device)
             q_vals_v = net(state_v)
             _, act_v = torch.max(q_vals_v, dim=1)
             action = int(act_v.item())
